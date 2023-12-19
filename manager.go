@@ -29,6 +29,10 @@ type JWTTokenManager[H, P any] struct {
 	signatureGenerationFunc func(jwt *JWT[H, P]) error
 }
 
+func (tm JWTTokenManager[H, P]) ValidateJWT(jwt *JWT[H, P]) error {
+	return tm.signatureValidationFunc(jwt)
+}
+
 func (tm JWTTokenManager[H, P]) ParseJWT(token string) (*JWT[H, P], error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
@@ -83,7 +87,16 @@ func (tm JWTTokenManager[H, P]) ParseJWT(token string) (*JWT[H, P], error) {
 		return nil, err
 	}
 
-	if err := tm.signatureValidationFunc(jwt); err != nil {
+	return jwt, nil
+}
+
+func (tm JWTTokenManager[H, P]) ParseAndValidateJWT(token string) (*JWT[H, P], error) {
+	jwt, err := tm.ParseJWT(token)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tm.ValidateJWT(jwt); err != nil {
 		return nil, err
 	}
 
